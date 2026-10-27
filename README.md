@@ -20,7 +20,9 @@ A day-ahead decision for delivery day D is made on D-1 at a configurable cutoff 
 
 | Path | Purpose |
 |---|---|
-| `backend/` | FastAPI service, analysis code and tests |
+| `backend/app/analysis/` | Loader, decision-time selector, metrics, breakdowns, uncertainty band |
+| `backend/tests/` | pytest suite for the analysis code |
+| `backend/` | FastAPI service (Sprint 2) |
 | `frontend/` | React (Vite) app |
 | `scripts/` | Data fetch (`fetch_data.py`) and exploration (`explore.py`) scripts |
 | `notebooks/` | Exploration notebooks |
@@ -37,6 +39,13 @@ python -m venv .venv && source .venv/bin/activate
 pip install pandas requests
 python scripts/fetch_data.py      # downloads Elexon data into data/raw/
 python scripts/explore.py         # prints schema, cadence and quality checks
+python scripts/run_analysis.py    # cleans data, builds the backtest, writes data/processed/
+```
+
+Run the tests:
+
+```bash
+cd backend && pip install -r requirements.txt && python -m pytest
 ```
 
 ## AI tool disclosure
