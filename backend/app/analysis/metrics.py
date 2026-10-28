@@ -23,6 +23,8 @@ def compute_metrics(df: pd.DataFrame) -> dict:
         "mae_mw": mae,
         "rmse_mw": float(np.sqrt((err ** 2).mean())),
         "bias_mw": float(err.mean()),
+        # RMSE^2 = bias^2 + error_std^2: separates the systematic offset from the random scatter
+        "error_std_mw": float(err.std(ddof=0)),
         "mean_actual_mw": mean_actual,
         "peak_actual_mw": peak_actual,
         "nmae_pct_of_mean": float(100 * mae / mean_actual) if mean_actual > 0 else None,

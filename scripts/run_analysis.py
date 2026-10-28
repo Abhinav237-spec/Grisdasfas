@@ -6,7 +6,7 @@ Usage (from the repo root):
 
 Writes to the output directory:
     actuals.csv, forecasts.csv       cleaned inputs
-    backtest.csv                     decision-time forecast vs actual, delivery days 2 Jan - 1 Feb 2026
+    backtest.csv                     decision-time forecast vs actual, delivery days 2 Jan - 1 Feb 2026 (hourly)
     summary.json                     headline metrics, breakdowns, safety margin, worst days
 """
 import argparse
@@ -74,10 +74,11 @@ def main():
     h = summary["headline"]
     print(f"Delivery days with data: {summary['delivery_days_with_data']} / {len(days)}")
     print(f"No forecast: {missing_days or 'none'}; incomplete coverage: {incomplete or 'none'}")
-    print(f"Half-hours evaluated: {h['n']}")
+    print(f"Hours evaluated: {h['n']}")
+    print(f"bias/scatter split: bias {h['bias_mw']:+.0f} MW, error std {h['error_std_mw']:.0f} MW")
     print(f"MAE {h['mae_mw']:.0f} MW | RMSE {h['rmse_mw']:.0f} MW | bias {h['bias_mw']:+.0f} MW")
     print(f"nMAE {h['nmae_pct_of_mean']:.1f}% of mean actual ({h['mean_actual_mw']:.0f} MW)")
-    print(f"P90 safety margin {margin:.0f} MW; margin held in {100 * summary['margin_coverage_in_sample']:.1f}% of half-hours")
+    print(f"P90 safety margin {margin:.0f} MW; margin held in {100 * summary['margin_coverage_in_sample']:.1f}% of hours")
     print("Worst days:")
     for w in summary["worst_days"]:
         print(f"  {w['day']}: MAE {w['mae_mw']:.0f} MW, bias {w['bias_mw']:+.0f} MW")

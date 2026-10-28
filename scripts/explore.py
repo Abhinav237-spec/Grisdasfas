@@ -15,8 +15,15 @@ def section(title):
     print(f"\n{'=' * 8} {title} {'=' * 8}")
 
 
-act = pd.read_csv(RAW / "fuelhh_wind.csv")
-fc = pd.read_csv(RAW / "windfor.csv")
+def read(stem):
+    for ext, fn in ((".csv", pd.read_csv), (".json", lambda p: pd.read_json(p, convert_dates=False))):
+        if (RAW / f"{stem}{ext}").exists():
+            return fn(RAW / f"{stem}{ext}")
+    raise SystemExit(f"Missing {stem}.csv or {stem}.json in {RAW}")
+
+
+act = read("fuelhh_wind")
+fc = read("windfor")
 for df, cols in ((act, ["startTime", "publishTime"]), (fc, ["startTime", "publishTime"])):
     for c in cols:
         if c in df:

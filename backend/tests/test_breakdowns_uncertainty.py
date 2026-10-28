@@ -5,12 +5,12 @@ import pandas as pd
 from app.analysis.backtest import build_backtest, join_actuals
 from app.analysis.breakdowns import errors_by_horizon, errors_by_hour, errors_by_wind_level
 from app.analysis.uncertainty import conservative_wind, coverage, safety_margin, worst_days
-from conftest import make_actuals, make_forecasts
+from conftest import make_forecasts, make_hourly_actuals
 
 
 def test_join_actuals_sign_convention():
     fc = make_forecasts([("2026-01-02 12:00", "2026-01-01 06:00", 120)])
-    act = make_actuals([("2026-01-02 12:00", 100)])
+    act = make_hourly_actuals([("2026-01-02 12:00", 100)])
     j = join_actuals(fc, act)
     assert j.loc[0, "error"] == 20 and j.loc[0, "abs_error"] == 20  # over-forecast is positive
 
@@ -21,7 +21,7 @@ def test_errors_by_horizon_buckets():
         ("2026-01-02 12:00", "2026-01-02 07:00", 101),
         ("2026-01-02 12:00", "2026-01-01 06:00", 110),
     ])
-    j = join_actuals(fc, make_actuals([("2026-01-02 12:00", 100)]))
+    j = join_actuals(fc, make_hourly_actuals([("2026-01-02 12:00", 100)]))
     by = {r["horizon_bucket"]: r for r in errors_by_horizon(j)}
     assert by["0-6h"]["mae_mw"] == 1
     assert by["30-36h"]["mae_mw"] == 10  # 30h exactly falls in [30, 36)
@@ -33,7 +33,7 @@ def test_errors_by_hour_uses_uk_local_hour():
         ("2026-01-02 00:00", "2026-01-01 06:00", 10),
         ("2026-01-02 12:00", "2026-01-01 06:00", 30),
     ])
-    j = join_actuals(fc, make_actuals([("2026-01-02 00:00", 0), ("2026-01-02 12:00", 20)]))
+    j = join_actuals(fc, make_hourly_actuals([("2026-01-02 00:00", 0), ("2026-01-02 12:00", 20)]))
     by = {r["hour"]: r for r in errors_by_hour(j)}
     assert by[0]["mae_mw"] == 10 and by[12]["mae_mw"] == 10
 
@@ -66,7 +66,7 @@ def test_worst_days_ranking():
         ("2026-01-02 12:00", "2026-01-01 06:00", 110),  # day 1 err 10
         ("2026-01-03 12:00", "2026-01-02 06:00", 150),  # day 2 err 50
     ])
-    act = make_actuals([("2026-01-02 12:00", 100), ("2026-01-03 12:00", 100)])
+    act = make_hourly_actuals([("2026-01-02 12:00", 100), ("2026-01-03 12:00", 100)])
     bt = build_backtest(fc, act, [date(2026, 1, 2), date(2026, 1, 3)])
     w = worst_days(bt, n=2)
     assert [r["day"] for r in w] == [date(2026, 1, 3), date(2026, 1, 2)]
@@ -75,7 +75,26 @@ def test_worst_days_ranking():
 
 def test_build_backtest_flags_incomplete_days_and_skips_empty():
     fc = make_forecasts([("2026-01-02 12:00", "2026-01-01 06:00", 110)])
-    act = make_actuals([("2026-01-02 12:00", 100)])
+    act = make_hourly_actuals([("2026-01-02 12:00", 100)])
     bt = build_backtest(fc, act, [date(2026, 1, 2), date(2026, 1, 5)])
     assert list(bt["day"].unique()) == [date(2026, 1, 2)]
-    assert not bt["coverage_ok"].iloc[0]  # 1 of 48 half-hours
+    assert not bt["coverage_ok"].iloc[0]  # 1 of 24 hours
+
+
+def test_hourly_actuals_average_the_two_half_hours():
+    from app.analysis.backtest import hourly_actuals
+    from conftest import make_actuals
+    act = make_actuals([
+        ("2026-01-02 12:00", 100), ("2026-01-02 12:30", 120),   # hour 12 -> 110
+        ("2026-01-02 13:00", 200),                              # hour 13 incomplete -> dropped
+    ])
+    h = hourly_actuals(act)
+    assert len(h) == 1 and h.loc[0, "generation"] == 110
+
+
+def test_join_uses_hourly_mean_of_actuals():
+    from conftest import make_actuals
+    fc = make_forecasts([("2026-01-02 12:00", "2026-01-01 06:00", 130)])
+    act = make_actuals([("2026-01-02 12:00", 100), ("2026-01-02 12:30", 120)])
+    j = join_actuals(fc, act)
+    assert j.loc[0, "actual"] == 110 and j.loc[0, "error"] == 20

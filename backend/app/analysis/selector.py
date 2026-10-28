@@ -48,3 +48,9 @@ def select_forecasts(forecasts: pd.DataFrame, day: date, cutoff: time = DEFAULT_
 def expected_half_hours(day: date) -> int:
     start, end = delivery_window(day)
     return int((end - start) / pd.Timedelta(minutes=30))
+
+
+def expected_hours(day: date) -> int:
+    """WINDFOR is hourly: 24 forecast hours per delivery day (23/25 on DST days)."""
+    start, end = delivery_window(day)
+    return int((end - start) / pd.Timedelta(hours=1))

@@ -24,3 +24,12 @@ def make_actuals(rows):
     df = pd.DataFrame(rows, columns=["startTime", "generation"])
     df["startTime"] = pd.to_datetime(df["startTime"], utc=True)
     return df
+
+
+def make_hourly_actuals(rows):
+    """rows: (hourStart, generation); emits both half-hours with the same value."""
+    out = []
+    for start, gen in rows:
+        t = pd.Timestamp(start, tz="UTC")
+        out += [(t, gen), (t + pd.Timedelta(minutes=30), gen)]
+    return make_actuals(out)

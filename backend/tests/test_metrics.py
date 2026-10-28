@@ -46,3 +46,8 @@ def test_empty_frame():
 def test_zero_actual_does_not_divide_by_zero():
     m = compute_metrics(frame([1, 2], [0, 0]))
     assert m["nmae_pct_of_mean"] is None and m["nmae_pct_of_peak"] is None
+
+
+def test_rmse_splits_into_bias_and_scatter():
+    m = compute_metrics(frame([10, 20, 30, 40], [12, 18, 30, 50]))
+    assert math.isclose(m["rmse_mw"] ** 2, m["bias_mw"] ** 2 + m["error_std_mw"] ** 2)
