@@ -14,6 +14,17 @@ def test_clean_actuals_filters_wind_dedupes_and_drops_nulls():
     assert out.loc[0, "generation"] == 105  # duplicate keeps the last row
 
 
+def test_clean_actuals_keeps_latest_publication_of_a_half_hour():
+    raw = pd.DataFrame({
+        "startTime": ["2026-01-02T00:00:00Z", "2026-01-02T00:00:00Z"],
+        "publishTime": ["2026-01-02T00:35:00Z", "2026-01-02T00:05:00Z"],  # later row is the OLDER publication
+        "fuelType": ["WIND", "WIND"],
+        "generation": [111, 222],
+    })
+    out = clean_actuals(raw)
+    assert len(out) == 1 and out.loc[0, "generation"] == 111
+
+
 def test_clean_forecasts_dedupes_and_adds_horizon():
     raw = pd.DataFrame({
         "startTime": ["2026-01-02T12:00:00Z"] * 3,

@@ -67,8 +67,8 @@ def fetch_forecasts():
         data = get_json(
             f"{BASE}/WINDFOR/stream",
             {
-                "publishDateTimeFrom": frm.strftime("%Y-%m-%dT%H:%MZ"),
-                "publishDateTimeTo": to.strftime("%Y-%m-%dT%H:%MZ"),
+                "publishDateTimeFrom": frm.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "publishDateTimeTo": to.strftime("%Y-%m-%dT%H:%M:%SZ"),
             },
         )
         rows.extend(data)

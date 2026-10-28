@@ -21,12 +21,16 @@ def clean_actuals(df: pd.DataFrame) -> pd.DataFrame:
     """Keep one row per half-hour; if duplicated, keep the last row. Drop null generation."""
     if "fuelType" in df.columns:
         df = df[df["fuelType"] == "WIND"]
-    out = df[["startTime", "generation"]].copy()
-    out = _to_utc(out, ["startTime"])
+    cols = ["startTime", "generation"] + (["publishTime"] if "publishTime" in df.columns else [])
+    out = df[cols].copy()
+    out = _to_utc(out, [c for c in ("startTime", "publishTime") if c in out.columns])
     out["generation"] = pd.to_numeric(out["generation"], errors="coerce")
     out = out.dropna(subset=["generation"])
+    # FUELHH rows carry a publishTime, so a half-hour can be re-published. Keep the latest publication.
+    if "publishTime" in out.columns:
+        out = out.sort_values("publishTime")
     out = out.drop_duplicates("startTime", keep="last").sort_values("startTime")
-    return out.reset_index(drop=True)
+    return out[["startTime", "generation"]].reset_index(drop=True)
 
 
 def clean_forecasts(df: pd.DataFrame) -> pd.DataFrame:
