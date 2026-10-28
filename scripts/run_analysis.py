@@ -38,8 +38,14 @@ def main():
 
     raw, out = Path(a.raw), Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    act = load_actuals(raw / "fuelhh_wind.csv")
-    fc = load_forecasts(raw / "windfor.csv")
+    def find(stem):
+        for ext in (".csv", ".json"):
+            if (raw / f"{stem}{ext}").exists():
+                return raw / f"{stem}{ext}"
+        sys.exit(f"Missing {stem}.csv or {stem}.json in {raw}")
+
+    act = load_actuals(find("fuelhh_wind"))
+    fc = load_forecasts(find("windfor"))
     act.to_csv(out / "actuals.csv", index=False)
     fc.to_csv(out / "forecasts.csv", index=False)
 

@@ -25,6 +25,15 @@ def test_clean_actuals_keeps_latest_publication_of_a_half_hour():
     assert len(out) == 1 and out.loc[0, "generation"] == 111
 
 
+def test_load_json_download(tmp_path):
+    from app.analysis.loader import load_forecasts
+    p = tmp_path / "windfor.json"
+    p.write_text('[{"dataset":"WINDFOR","publishTime":"2026-01-01T06:00:00Z",'
+                 '"startTime":"2026-01-02T12:00:00Z","generation":1234.5}]')
+    out = load_forecasts(p)
+    assert out.loc[0, "generation"] == 1234.5 and out.loc[0, "horizon_h"] == 30.0
+
+
 def test_clean_forecasts_dedupes_and_adds_horizon():
     raw = pd.DataFrame({
         "startTime": ["2026-01-02T12:00:00Z"] * 3,

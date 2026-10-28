@@ -44,9 +44,17 @@ def clean_forecasts(df: pd.DataFrame) -> pd.DataFrame:
     return out.sort_values(["startTime", "publishTime"]).reset_index(drop=True)
 
 
+def _read(path: str | Path) -> pd.DataFrame:
+    """Read a CSV or a JSON array (as downloaded from the Elexon API page)."""
+    path = Path(path)
+    if path.suffix.lower() == ".json":
+        return pd.read_json(path, convert_dates=False)
+    return pd.read_csv(path)
+
+
 def load_actuals(path: str | Path) -> pd.DataFrame:
-    return clean_actuals(pd.read_csv(path))
+    return clean_actuals(_read(path))
 
 
 def load_forecasts(path: str | Path) -> pd.DataFrame:
-    return clean_forecasts(pd.read_csv(path))
+    return clean_forecasts(_read(path))
